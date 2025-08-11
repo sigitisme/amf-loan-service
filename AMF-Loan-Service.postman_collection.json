@@ -1,0 +1,855 @@
+{
+  "info": {
+    "_postman_id": "amf-loan-service-collection",
+    "name": "AMF Loan Service API",
+    "description": "Complete API collection for AMF Loan Service - a peer-to-peer lending platform with event-driven investment processing.\n\n## Getting Started:\n1. Run `make mock-users` to create test accounts\n2. Use login endpoints to get authentication tokens\n3. Test the full loan workflow\n\n## User Roles:\n- **borrower**: Create loans and view their own loans\n- **investor**: Invest in approved loans and view their investments  \n- **field_validator**: Approve proposed loans\n- **field_officer**: Disburse invested loans\n\n## Workflow:\n1. Borrower creates loan (proposed)\n2. Field validator approves loan (approved)\n3. Investors invest (triggers event-driven processing)\n4. When fully funded → loan becomes invested\n5. Field officer disburses loan (disbursed)\n\n## Test Accounts (after running `make mock-users`):\n**Borrowers:** borrower1-3@example.com\n**Investors:** investor1-5@example.com\n**Staff:** validator@amf.com, officer@amf.com\n**Password:** password123 (staff: validator123/officer123)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loan_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login as Borrower 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    console.log('✅ Borrower 1 logged in successfully');",
+                  "    console.log('User:', response.user.email, '- Role:', response.user.role);",
+                  "    if (response.borrower) {",
+                  "        console.log('Borrower Profile:', response.borrower.full_name);",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Login failed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"borrower1@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as John Doe (Borrower)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Borrower 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    console.log('✅ Borrower 2 logged in successfully');",
+                  "    console.log('User:', response.user.email, '- Role:', response.user.role);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"borrower2@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as Alice Johnson (Borrower)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Investor 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    console.log('✅ Investor 1 logged in successfully');",
+                  "    console.log('User:', response.user.email, '- Role:', response.user.role);",
+                  "    if (response.investor) {",
+                  "        console.log('Investor Profile:', response.investor.full_name);",
+                  "        console.log('Total Invested:', response.investor.total_invested);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"investor1@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as Emma Wilson (Investor)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Investor 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    console.log('✅ Investor 2 logged in successfully');",
+                  "    console.log('User:', response.user.email, '- Role:', response.user.role);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"investor2@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as Michael Brown (Investor)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Field Validator",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    console.log('✅ Field Validator logged in successfully');",
+                  "    console.log('User:', response.user.email, '- Role:', response.user.role);",
+                  "} else {",
+                  "    console.log('❌ Login failed for validator');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"validator@amf.com\",\n  \"password\": \"validator123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as Field Validator (can approve loans)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Field Officer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    console.log('✅ Field Officer logged in successfully');",
+                  "    console.log('User:', response.user.email, '- Role:', response.user.role);",
+                  "} else {",
+                  "    console.log('❌ Login failed for officer');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"officer@amf.com\",\n  \"password\": \"officer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as Field Officer (can disburse loans)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Loans Management",
+      "item": [
+        {
+          "name": "Create Loan Request (Borrower)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('loan_id', response.id);",
+                  "    console.log('✅ Loan created successfully');",
+                  "    console.log('Loan ID:', response.id);",
+                  "    console.log('Principal Amount:', response.principal_amount);",
+                  "    console.log('Interest Rate:', response.rate);",
+                  "    console.log('Total Interest:', response.total_interest);",
+                  "    console.log('ROI for Investors:', response.roi);",
+                  "    console.log('Remaining Investment:', response.remaining_investment);",
+                  "    console.log('State:', response.state);",
+                  "} else {",
+                  "    console.log('❌ Failed to create loan');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"principal_amount\": 50000.00,\n  \"rate\": 0.12\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loans"]
+            },
+            "description": "Create a new loan request (requires borrower role)\n\n- principal_amount: Amount to borrow\n- rate: Interest rate for borrower\n\n**Auto-calculated fields:**\n- total_interest: Total interest borrower must pay (principal * rate)\n- roi: Return for investors (80% of borrower rate, platform keeps 20% margin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Loans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Loans retrieved successfully');",
+                  "    console.log('Total loans:', response.length);",
+                  "    response.forEach((loan, index) => {",
+                  "        console.log(`Loan ${index + 1}: ${loan.state} - $${loan.principal_amount} (Remaining: $${loan.remaining_investment || 'N/A'})`);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/loans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loans"]
+            },
+            "description": "Get list of loans (filtered based on user role)\n\n- Borrowers: See their own loans\n- Investors: See approved loans\n- Field staff: See all loans"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Specific Loan Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const loan = pm.response.json();",
+                  "    console.log('✅ Loan details retrieved');",
+                  "    console.log('Loan ID:', loan.id);",
+                  "    console.log('Borrower:', loan.borrower?.full_name || 'N/A');",
+                  "    console.log('Amount:', loan.principal_amount);",
+                  "    console.log('Invested:', loan.invested_amount || 0);",
+                  "    console.log('Remaining:', loan.remaining_investment || 'N/A');",
+                  "    console.log('State:', loan.state);",
+                  "    if (loan.investments && loan.investments.length > 0) {",
+                  "        console.log('Investors:', loan.investments.length);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/loans/{{loan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loans", "{{loan_id}}"]
+            },
+            "description": "Get detailed information about a specific loan including investments and borrower details"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Proposed Loans",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/loans?state=proposed",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loans"],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "proposed"
+                }
+              ]
+            },
+            "description": "Get all proposed loans (awaiting approval)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Approved Loans",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/loans?state=approved",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loans"],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "approved"
+                }
+              ]
+            },
+            "description": "Get all approved loans (available for investment)"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Loan (Field Validator Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Loan approved successfully');",
+                  "    console.log('Loan is now available for investment');",
+                  "} else {",
+                  "    console.log('❌ Failed to approve loan');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"photo_proof_url\": \"https://storage.example.com/loan-proofs/field-validation-{{$timestamp}}.jpg\",\n  \"approval_date\": \"{{$isoTimestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loans/{{loan_id}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loans", "{{loan_id}}", "approve"]
+            },
+            "description": "Approve a proposed loan after field validation\n\n**Requirements:**\n- User must have field_validator role\n- Loan must be in 'proposed' state\n- photo_proof_url: Evidence of field verification\n- approval_date: When the approval was made"
+          },
+          "response": []
+        },
+        {
+          "name": "Disburse Loan (Field Officer Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Loan disbursed successfully');",
+                  "    console.log('Funds have been transferred to borrower');",
+                  "} else {",
+                  "    console.log('❌ Failed to disburse loan');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agreement_file_url\": \"https://documents.example.com/agreements/loan-{{$timestamp}}.pdf\",\n  \"disbursement_date\": \"{{$isoTimestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loans/{{loan_id}}/disburse",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loans", "{{loan_id}}", "disburse"]
+            },
+            "description": "Disburse funds to borrower after loan is fully invested\n\n**Requirements:**\n- User must have field_officer role\n- Loan must be in 'invested' state (fully funded)\n- agreement_file_url: Signed loan agreement document\n- disbursement_date: When funds were transferred"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Investment System (Event-Driven)",
+      "item": [
+        {
+          "name": "Request Investment (Investor Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "    console.log('✅ Investment request submitted successfully');",
+                  "    console.log('Investment is being processed asynchronously via Kafka');",
+                  "    console.log('Check loan details or investments to see the result');",
+                  "} else if (pm.response.code === 400) {",
+                  "    console.log('❌ Investment request rejected:');",
+                  "    console.log(pm.response.json().error);",
+                  "} else {",
+                  "    console.log('❌ Investment request failed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loan_id\": \"{{loan_id}}\",\n  \"amount\": 25000.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/investments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "investments"]
+            },
+            "description": "Submit an investment request (Event-Driven Processing)\n\n**Requirements:**\n- User must have investor role\n- Loan must be in 'approved' state\n- Amount must not exceed remaining investment needed\n- Cannot invest in own loan\n\n**Process:**\n1. Request validation\n2. Event published to Kafka\n3. Consumer processes with database locks\n4. Investment recorded or rejected\n\n**Returns:** 202 Accepted (async processing)"
+          },
+          "response": []
+        },
+        {
+          "name": "Partial Investment Example",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "    console.log('✅ Partial investment submitted');",
+                  "    console.log('This investment will partially fund the loan');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loan_id\": \"{{loan_id}}\",\n  \"amount\": 10000.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/investments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "investments"]
+            },
+            "description": "Example of partial investment - multiple investors can fund a single loan"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Investments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const investments = pm.response.json();",
+                  "    console.log('✅ My investments retrieved');",
+                  "    console.log('Total investments:', investments.length);",
+                  "    let totalAmount = 0;",
+                  "    investments.forEach((inv, index) => {",
+                  "        console.log(`Investment ${index + 1}: $${inv.amount} in Loan ${inv.loan_id} (Status: ${inv.status})`);",
+                  "        totalAmount += inv.amount;",
+                  "    });",
+                  "    console.log('Total invested amount: $' + totalAmount);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/investments/my",
+              "host": ["{{base_url}}"],
+              "path": ["api", "investments", "my"]
+            },
+            "description": "Get all investments made by the current investor\n\nShows:\n- Investment amounts\n- Associated loans\n- Investment status\n- Loan details"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Loan Investments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const investments = pm.response.json();",
+                  "    console.log('✅ Loan investments retrieved');",
+                  "    console.log('Number of investors:', investments.length);",
+                  "    let totalInvested = 0;",
+                  "    investments.forEach((inv, index) => {",
+                  "        console.log(`Investor ${index + 1}: ${inv.investor?.full_name || 'Unknown'} - $${inv.amount}`);",
+                  "        totalInvested += inv.amount;",
+                  "    });",
+                  "    console.log('Total invested in this loan: $' + totalInvested);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/loans/{{loan_id}}/investments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loans", "{{loan_id}}", "investments"]
+            },
+            "description": "Get all investments for a specific loan\n\nShows:\n- All investors in the loan\n- Investment amounts\n- Investor details\n- Total funding status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Testing Scenarios",
+      "item": [
+        {
+          "name": "Complete Loan Workflow Test",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "🎯 **Complete Workflow Test Steps:**\n\n1. **Login as Borrower** → Create loan request\n2. **Login as Field Validator** → Approve the loan  \n3. **Login as Investor 1** → Make partial investment\n4. **Login as Investor 2** → Complete the funding\n5. **Check loan status** → Should be 'invested'\n6. **Login as Field Officer** → Disburse loan\n7. **Final check** → Loan should be 'disbursed'\n\n**Expected States:**\nproposed → approved → invested → disbursed\n\n**Key Features Tested:**\n- Role-based access control\n- Event-driven investment processing\n- Database transactions & locking\n- Real-time funding tracking\n- State machine validation"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Race Condition (Multiple Investors)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "🏁 **Race Condition Test:**\n\n1. Create a loan for $10,000\n2. Have Field Validator approve it\n3. **Simultaneously** (use Runner):\n   - Investor 1: Invest $8,000\n   - Investor 2: Invest $8,000  \n   - Investor 3: Invest $8,000\n\n**Expected Result:**\n- Only valid investments should succeed\n- Total investments ≤ loan amount\n- No over-funding due to concurrent access\n- Kafka consumer handles ordering properly\n\n**Tests:**\n- Pessimistic locking\n- Transaction isolation\n- Event processing order\n- Data consistency"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "System Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('API is healthy', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ API is healthy and running');",
+                  "} else {",
+                  "    console.log('❌ API health check failed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Basic health check to verify API is running"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
