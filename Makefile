@@ -10,6 +10,15 @@ mock-users:
 test:
 	go test -v ./...
 
+test-coverage:
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
+
+test-coverage-func:
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+
 clean:
 	rm -rf bin/
 
