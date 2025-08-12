@@ -31,9 +31,10 @@ func SetupRoutes(
 		// Loan routes
 		loans := api.Group("/loans")
 		{
-			loans.POST("", loanHandler.CreateLoan) // Borrowers only
-			loans.GET("", loanHandler.GetLoans)    // All authenticated users
-			loans.GET("/:id", loanHandler.GetLoan) // All authenticated users
+			loans.POST("", loanHandler.CreateLoan)   // Borrowers only
+			loans.GET("", loanHandler.GetLoans)      // All authenticated users
+			loans.GET("/my", loanHandler.GetMyLoans) // Borrowers only - specific endpoint for borrower's loans
+			loans.GET("/:id", loanHandler.GetLoan)   // All authenticated users
 
 			// Approval route - field validators only
 			loans.POST("/:id/approve",

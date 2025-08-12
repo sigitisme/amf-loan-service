@@ -81,6 +81,7 @@ type LoanService interface {
 	GetLoansByState(ctx context.Context, state LoanState) ([]Loan, error)
 	GetLoanByID(ctx context.Context, id uuid.UUID) (*Loan, error)
 	GetBorrowerLoans(ctx context.Context, borrowerID uuid.UUID) ([]Loan, error)
+	GetBorrowerLoansByUserID(ctx context.Context, userID uuid.UUID) ([]Loan, error)
 	DisburseLoan(ctx context.Context, loanID uuid.UUID, officerID uuid.UUID, agreementFileURL string, disbursementDate time.Time) error
 }
 
@@ -88,6 +89,7 @@ type InvestmentService interface {
 	RequestInvestment(ctx context.Context, investorID uuid.UUID, loanID uuid.UUID, amount float64) error // Just validate and publish
 	ProcessInvestment(ctx context.Context, event InvestmentEvent) error                                  // Consumer logic
 	GetInvestorInvestments(ctx context.Context, investorID uuid.UUID) ([]Investment, error)
+	GetInvestorInvestmentsByUserID(ctx context.Context, userID uuid.UUID) ([]Investment, error)
 	GetLoanInvestments(ctx context.Context, loanID uuid.UUID) ([]Investment, error)
 }
 

@@ -34,9 +34,9 @@ func NewInvestmentService(
 }
 
 // RequestInvestment validates the request and publishes to Kafka
-func (s *investmentService) RequestInvestment(ctx context.Context, investorID uuid.UUID, loanID uuid.UUID, amount float64) error {
-	// Get investor to validate existence
-	_, err := s.investorRepo.GetByID(ctx, investorID)
+func (s *investmentService) RequestInvestment(ctx context.Context, userID uuid.UUID, loanID uuid.UUID, amount float64) error {
+	// Get investor to validate existence (userID is actually userID from the handler)
+	investor, err := s.investorRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domain.ErrUserNotFound
@@ -58,8 +58,8 @@ func (s *investmentService) RequestInvestment(ctx context.Context, investorID uu
 		return domain.ErrLoanNotApproved
 	}
 
-	// Check if investor is trying to invest in their own loan
-	if loan.BorrowerID == investorID {
+	// Check if investor is trying to invest in their own loan (compare user IDs)
+	if loan.Borrower.UserID == userID {
 		return domain.ErrSelfInvestment
 	}
 
@@ -73,11 +73,11 @@ func (s *investmentService) RequestInvestment(ctx context.Context, investorID uu
 		return domain.ErrInvestmentExceedsLimit
 	}
 
-	// Create investment event
+	// Create investment event using the actual investor ID
 	event := domain.InvestmentEvent{
 		ID:         uuid.New(),
 		LoanID:     loanID,
-		InvestorID: investorID,
+		InvestorID: investor.ID, // Use the actual investor ID, not user ID
 		Amount:     amount,
 		Timestamp:  time.Now(),
 	}
@@ -150,6 +150,17 @@ func (s *investmentService) ProcessInvestment(ctx context.Context, event domain.
 
 func (s *investmentService) GetInvestorInvestments(ctx context.Context, investorID uuid.UUID) ([]domain.Investment, error) {
 	return s.investmentRepo.GetByInvestorID(ctx, investorID)
+}
+
+func (s *investmentService) GetInvestorInvestmentsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Investment, error) {
+	// Get investor by user ID first
+	investor, err := s.investorRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get investments by investor ID
+	return s.investmentRepo.GetByInvestorID(ctx, investor.ID)
 }
 
 func (s *investmentService) GetLoanInvestments(ctx context.Context, loanID uuid.UUID) ([]domain.Investment, error) {

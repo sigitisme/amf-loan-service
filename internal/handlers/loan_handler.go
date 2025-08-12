@@ -142,6 +142,62 @@ func (h *LoanHandler) ApproveLoan(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Loan approved successfully"})
 }
 
+func (h *LoanHandler) GetMyLoans(c *gin.Context) {
+	// Get user from context
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Success: false,
+			Error:   "unauthorized",
+			Message: "User not found in context",
+		})
+		return
+	}
+
+	userObj, ok := user.(*domain.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Success: false,
+			Error:   "internal_error",
+			Message: "Invalid user type",
+		})
+		return
+	}
+
+	// Only borrowers can access this endpoint
+	if userObj.Role != domain.RoleBorrower {
+		c.JSON(http.StatusForbidden, ErrorResponse{
+			Success: false,
+			Error:   "forbidden",
+			Message: "Only borrowers can access their loans through this endpoint",
+		})
+		return
+	}
+
+	// Get borrower's loans using the user ID
+	loans, err := h.loanService.GetBorrowerLoansByUserID(c.Request.Context(), userObj.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Success: false,
+			Error:   "fetch_failed",
+			Message: "Failed to fetch your loans",
+		})
+		return
+	}
+
+	// Convert domain entities to handler responses
+	responses := make([]LoanResponse, 0, len(loans))
+	for _, loan := range loans {
+		response := MapLoanToResponse(&loan, true, true) // Include borrower and investment details
+		responses = append(responses, response)
+	}
+
+	c.JSON(http.StatusOK, APIResponse{
+		Success: true,
+		Data:    responses,
+	})
+}
+
 func (h *LoanHandler) GetLoans(c *gin.Context) {
 	stateStr := c.Query("state")
 
@@ -163,7 +219,7 @@ func (h *LoanHandler) GetLoans(c *gin.Context) {
 
 	if userObj.Role == domain.RoleBorrower {
 		// Borrowers can only see their own loans
-		loans, err = h.loanService.GetBorrowerLoans(c.Request.Context(), userObj.ID)
+		loans, err = h.loanService.GetBorrowerLoansByUserID(c.Request.Context(), userObj.ID)
 	} else if stateStr != "" {
 		// Staff members can filter by state
 		state := domain.LoanState(stateStr)

@@ -64,11 +64,23 @@ func (h *InvestmentHandler) Invest(c *gin.Context) {
 	err := h.investmentService.RequestInvestment(c.Request.Context(), userObj.ID, req.LoanID, req.Amount)
 	if err != nil {
 		switch err {
+		case domain.ErrUserNotFound:
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Success: false,
+				Error:   "investor_not_found",
+				Message: "Investor profile not found",
+			})
 		case domain.ErrLoanNotFound:
 			c.JSON(http.StatusNotFound, ErrorResponse{
 				Success: false,
 				Error:   "loan_not_found",
 				Message: "The specified loan was not found",
+			})
+		case domain.ErrLoanNotApproved:
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Success: false,
+				Error:   "loan_not_approved",
+				Message: "Loan is not approved yet and not available for investment",
 			})
 		case domain.ErrInvalidLoanState:
 			c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -139,7 +151,7 @@ func (h *InvestmentHandler) GetMyInvestments(c *gin.Context) {
 		return
 	}
 
-	investments, err := h.investmentService.GetInvestorInvestments(c.Request.Context(), userObj.ID)
+	investments, err := h.investmentService.GetInvestorInvestmentsByUserID(c.Request.Context(), userObj.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Success: false,

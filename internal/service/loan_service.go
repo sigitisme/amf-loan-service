@@ -126,6 +126,17 @@ func (s *loanService) GetBorrowerLoans(ctx context.Context, borrowerID uuid.UUID
 	return s.loanRepo.GetByBorrowerID(ctx, borrowerID)
 }
 
+func (s *loanService) GetBorrowerLoansByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Loan, error) {
+	// Get borrower by user ID first
+	borrower, err := s.borrowerRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get loans by borrower ID
+	return s.loanRepo.GetByBorrowerID(ctx, borrower.ID)
+}
+
 func (s *loanService) DisburseLoan(ctx context.Context, loanID uuid.UUID, officerID uuid.UUID, agreementFileURL string, disbursementDate time.Time) error {
 	// Get loan
 	loan, err := s.loanRepo.GetByID(ctx, loanID)
