@@ -13,10 +13,11 @@ import (
 )
 
 type investmentService struct {
-	investmentRepo domain.InvestmentRepository
-	loanRepo       domain.LoanRepository
-	investorRepo   domain.InvestorRepository
-	kafkaProducer  domain.KafkaProducer
+	investmentRepo      domain.InvestmentRepository
+	loanRepo            domain.LoanRepository
+	investorRepo        domain.InvestorRepository
+	kafkaProducer       domain.KafkaProducer
+	notificationService domain.NotificationService
 }
 
 func NewInvestmentService(
@@ -24,12 +25,14 @@ func NewInvestmentService(
 	loanRepo domain.LoanRepository,
 	investorRepo domain.InvestorRepository,
 	kafkaProducer domain.KafkaProducer,
+	notificationService domain.NotificationService,
 ) domain.InvestmentService {
 	return &investmentService{
-		investmentRepo: investmentRepo,
-		loanRepo:       loanRepo,
-		investorRepo:   investorRepo,
-		kafkaProducer:  kafkaProducer,
+		investmentRepo:      investmentRepo,
+		loanRepo:            loanRepo,
+		investorRepo:        investorRepo,
+		kafkaProducer:       kafkaProducer,
+		notificationService: notificationService,
 	}
 }
 
@@ -53,7 +56,7 @@ func (s *investmentService) RequestInvestment(ctx context.Context, userID uuid.U
 		return err
 	}
 
-	// Check if loan is approved
+	// Check if loan is approved (allow investment only for approved)
 	if loan.State != domain.LoanStateApproved {
 		return domain.ErrLoanNotApproved
 	}
@@ -135,12 +138,20 @@ func (s *investmentService) ProcessInvestment(ctx context.Context, event domain.
 		return fmt.Errorf("failed to create investment with transaction: %w", err)
 	}
 
-	// If loan is fully funded, publish fully funded event
+	// If loan is fully funded, publish fully funded event and send agreement letters
 	if loan.State == domain.LoanStateInvested {
 		if s.kafkaProducer != nil {
 			if err := s.kafkaProducer.PublishFullyFundedLoan(ctx, loan); err != nil {
 				// Log error but don't fail the investment
 				fmt.Printf("Failed to publish fully funded loan event: %v\n", err)
+			}
+		}
+
+		// Send agreement letters to all investors
+		if s.notificationService != nil {
+			if err := s.notificationService.SendAgreementLetters(ctx, loan.ID); err != nil {
+				// Log error but don't fail the investment
+				fmt.Printf("Failed to send agreement letters: %v\n", err)
 			}
 		}
 	}

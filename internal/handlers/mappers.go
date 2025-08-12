@@ -83,7 +83,6 @@ func MapLoanToResponse(loan *domain.Loan, includeBorrower, includeInvestments bo
 		ROI:                 loan.ROI,
 		TotalInterest:       loan.TotalInterest,
 		State:               loan.State,
-		AgreementLetterURL:  loan.AgreementLetterURL,
 		CreatedAt:           loan.CreatedAt,
 		UpdatedAt:           loan.UpdatedAt,
 	}

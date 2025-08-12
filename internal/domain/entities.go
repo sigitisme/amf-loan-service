@@ -76,7 +76,6 @@ type Loan struct {
 	ROI                 float64   `json:"roi" gorm:"not null"`            // Return on investment for investors (calculated)
 	TotalInterest       float64   `json:"total_interest" gorm:"not null"` // Total interest borrower must pay
 	State               LoanState `json:"state" gorm:"not null;default:'proposed'"`
-	AgreementLetterURL  string    `json:"agreement_letter_url"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 
@@ -101,13 +100,14 @@ type Approval struct {
 }
 
 type Investment struct {
-	ID         uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	LoanID     uuid.UUID `json:"loan_id" gorm:"not null"`
-	InvestorID uuid.UUID `json:"investor_id" gorm:"not null"`
-	Amount     float64   `json:"amount" gorm:"not null"`
-	Status     string    `json:"status" gorm:"default:'pending'"` // pending, completed, failed
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID                 uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	LoanID             uuid.UUID `json:"loan_id" gorm:"not null"`
+	InvestorID         uuid.UUID `json:"investor_id" gorm:"not null"`
+	Amount             float64   `json:"amount" gorm:"not null"`
+	Status             string    `json:"status" gorm:"default:'pending'"` // pending, completed, failed
+	AgreementLetterURL string    `json:"agreement_letter_url"`            // PDF link for the investor
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 
 	// Relations
 	Loan     Loan     `json:"loan" gorm:"foreignKey:LoanID"`

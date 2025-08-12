@@ -58,6 +58,13 @@ func (r *investmentRepository) UpdateStatus(ctx context.Context, id uuid.UUID, s
 		Update("status", status).Error
 }
 
+func (r *investmentRepository) UpdateAgreementLetterURL(ctx context.Context, id uuid.UUID, url string) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Investment{}).
+		Where("id = ?", id).
+		Update("agreement_letter_url", url).Error
+}
+
 func (r *investmentRepository) CreateWithTx(ctx context.Context, investment *domain.Investment, loan *domain.Loan) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Create the investment

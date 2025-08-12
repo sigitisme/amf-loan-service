@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sigitisme/amf-loan-service/internal/config"
 	"github.com/sigitisme/amf-loan-service/internal/infrastructure/database"
-	"github.com/sigitisme/amf-loan-service/internal/infrastructure/email"
 	"github.com/sigitisme/amf-loan-service/internal/infrastructure/kafka"
 	"github.com/sigitisme/amf-loan-service/internal/infrastructure/repository"
 	"github.com/sigitisme/amf-loan-service/internal/routes"
@@ -42,13 +41,11 @@ func main() {
 	kafkaProducer := kafka.NewProducer(&cfg.Kafka)
 	defer kafkaProducer.Close()
 
-	emailService := email.NewService(&cfg.SMTP)
-
 	// Initialize business services
 	authService := service.NewAuthService(userRepo, borrowerRepo, investorRepo, &cfg.JWT)
 	loanService := service.NewLoanService(loanRepo, approvalRepo, disbursementRepo, investmentRepo, borrowerRepo)
-	investmentService := service.NewInvestmentService(investmentRepo, loanRepo, investorRepo, kafkaProducer)
-	_ = service.NewNotificationService(loanRepo, investmentRepo, emailService) // Available for future use
+	notificationService := service.NewNotificationService(loanRepo, investmentRepo)
+	investmentService := service.NewInvestmentService(investmentRepo, loanRepo, investorRepo, kafkaProducer, notificationService)
 
 	// Initialize and start Kafka consumer
 	consumer := kafka.NewConsumer(&cfg.Kafka, investmentService)

@@ -22,9 +22,11 @@ func NewConsumer(cfg *config.KafkaConfig, investmentService domain.InvestmentSer
 		Brokers:        cfg.Brokers,
 		Topic:          cfg.InvestmentTopic,
 		GroupID:        "investment-processor",
-		MinBytes:       10e3, // 10KB
-		MaxBytes:       10e6, // 10MB
-		CommitInterval: time.Second,
+		MinBytes:       1,                      // Process messages immediately, don't wait to batch
+		MaxBytes:       10e6,                   // 10MB max
+		CommitInterval: 100 * time.Millisecond, // Commit more frequently
+		MaxWait:        100 * time.Millisecond, // Don't wait long for batching
+		StartOffset:    kafka.LastOffset,       // Start from latest
 	})
 
 	return &Consumer{
@@ -44,14 +46,20 @@ func (c *Consumer) StartConsumer(ctx context.Context) error {
 			log.Println("Consumer context cancelled, shutting down...")
 			return ctx.Err()
 		default:
-			message, err := c.reader.FetchMessage(ctx)
+			// Add timeout for message fetching
+			fetchCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+			message, err := c.reader.FetchMessage(fetchCtx)
+			cancel()
+
 			if err != nil {
 				if !c.running {
 					return nil
 				}
-				log.Printf("Error fetching message: %v", err)
-				time.Sleep(time.Second)
-				continue
+				// Don't log timeout errors, they're expected
+				if err != context.DeadlineExceeded {
+					log.Printf("Error fetching message: %v", err)
+				}
+				continue // Continue immediately without sleeping
 			}
 
 			if err := c.processMessage(ctx, message); err != nil {

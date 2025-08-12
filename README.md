@@ -151,10 +151,16 @@ cp .env.example .env
 3. Start infrastructure services:
 
 ```bash
-docker-compose up -d postgres kafka zookeeper
+./scripts/start-infra.sh
 ```
 
-4. Run the application:
+4. Create mock users:
+
+```bash
+go run cmd/create-mock-users/main.go
+```
+
+5. Run the application:
 
 ```bash
 go run cmd/server/main.go
