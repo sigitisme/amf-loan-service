@@ -10,6 +10,7 @@ import (
 	"github.com/sigitisme/amf-loan-service/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Mock repositories
@@ -124,12 +125,13 @@ func TestAuthService_Login_Success(t *testing.T) {
 
 	userID := uuid.New()
 	email := "test@example.com"
-	hashedPassword := "$2a$14$hashedpassword" // Mock bcrypt hash
+	// Create a proper bcrypt hash for the password "password"
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 
 	user := &domain.User{
 		ID:       userID,
 		Email:    email,
-		Password: hashedPassword,
+		Password: string(hashedPassword),
 		Role:     domain.RoleInvestor,
 	}
 

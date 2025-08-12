@@ -88,6 +88,66 @@ func (r *investmentRepository) CreateWithTx(ctx context.Context, investment *dom
 	})
 }
 
+// CreateInvestmentWithLoanLock atomically locks the loan and creates investment in the same transaction
+func (r *investmentRepository) CreateInvestmentWithLoanLock(ctx context.Context, investment *domain.Investment, loanID uuid.UUID) (*domain.Loan, error) {
+	var loan domain.Loan
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. Lock the loan within the transaction (SELECT FOR UPDATE)
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").
+			Preload("Borrower").
+			Where("id = ?", loanID).
+			First(&loan).Error; err != nil {
+			return err
+		}
+
+		// 2. Verify loan is still in approved state
+		if loan.State != domain.LoanStateApproved {
+			return domain.ErrInvalidLoanState
+		}
+
+		// 3. Check if investment still fits within remaining amount
+		if investment.Amount > loan.RemainingInvestment {
+			return domain.ErrInvestmentExceedsLimit
+		}
+
+		// 4. Update loan amounts
+		loan.InvestedAmount += investment.Amount
+		loan.RemainingInvestment -= investment.Amount
+
+		// 5. Check if loan is fully funded
+		if loan.RemainingInvestment <= 0 {
+			loan.State = domain.LoanStateInvested
+			loan.RemainingInvestment = 0 // Ensure it's exactly 0
+		}
+
+		// 6. Create the investment
+		if err := tx.Create(investment).Error; err != nil {
+			return err
+		}
+
+		// 7. Update the loan
+		if err := tx.Save(&loan).Error; err != nil {
+			return err
+		}
+
+		// 8. Update investor total invested
+		if err := tx.Model(&domain.Investor{}).
+			Where("id = ?", investment.InvestorID).
+			Update("total_invested", gorm.Expr("total_invested + ?", investment.Amount)).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &loan, nil
+}
+
 type approvalRepository struct {
 	db *gorm.DB
 }

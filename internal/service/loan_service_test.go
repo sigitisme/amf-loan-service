@@ -130,6 +130,14 @@ func (m *mockInvestmentRepository) CreateWithTx(ctx context.Context, investment 
 	return args.Error(0)
 }
 
+func (m *mockInvestmentRepository) CreateInvestmentWithLoanLock(ctx context.Context, investment *domain.Investment, loanID uuid.UUID) (*domain.Loan, error) {
+	args := m.Called(ctx, investment, loanID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Loan), args.Error(1)
+}
+
 // Test Loan Creation - Happy Flow
 func TestLoanService_CreateLoan_Success(t *testing.T) {
 	// Arrange

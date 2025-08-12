@@ -62,6 +62,8 @@ type InvestmentRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 	UpdateAgreementLetterURL(ctx context.Context, id uuid.UUID, url string) error
 	CreateWithTx(ctx context.Context, investment *Investment, loan *Loan) error // Transaction method
+	// New method that handles locking + transaction atomically
+	CreateInvestmentWithLoanLock(ctx context.Context, investment *Investment, loanID uuid.UUID) (*Loan, error)
 }
 
 type DisbursementRepository interface {
