@@ -72,11 +72,11 @@ I chose Clean Architecture to ensure long-term maintainability and testability. 
 
 **Problem**: Investment processing could create race conditions when multiple investors try to invest simultaneously in the same loan.
 
-**Solution**: Implemented Kafka-based event processing with pessimistic database locking.
+**Solution**: Implemented Kafka-based event processing with atomic database operations.
 
 ```go
-// Prevents race conditions in high-concurrency investment scenarios
-loan, err := s.loanRepo.GetByIDWithLock(ctx, event.LoanID)
+// Prevents race conditions with atomic loan locking + investment processing
+loan, err := s.investmentRepo.CreateInvestmentWithLoanLock(ctx, investment, event.LoanID)
 ```
 
 **Why Kafka over direct processing?**
@@ -98,14 +98,14 @@ loan, err := s.loanRepo.GetByIDWithLock(ctx, event.LoanID)
 
 ```go
 // Repository Pattern: Clean separation of data access
-type LoanRepository interface {
-    GetByIDWithLock(ctx context.Context, id uuid.UUID) (*Loan, error)
-    // Pessimistic locking prevents concurrent investment issues
+type InvestmentRepository interface {
+    CreateInvestmentWithLoanLock(ctx context.Context, investment *Investment, loanID uuid.UUID) (*Loan, error)
+    // Atomic operation prevents concurrent investment race conditions
 }
 
-// Transaction Management: Ensures data consistency
-func (r *investmentRepository) CreateWithTx(ctx context.Context, investment *Investment, loan *Loan) error {
-    // Single transaction for investment + loan updates
+// Atomic Transaction Management: Ensures data consistency
+func (r *investmentRepository) CreateInvestmentWithLoanLock(ctx context.Context, investment *Investment, loanID uuid.UUID) (*Loan, error) {
+    // Single atomic transaction: lock + validate + update + create
 }
 ```
 
@@ -145,7 +145,7 @@ MaxWait:  100 * time.Millisecond, // Minimal wait time
 
 - **UUID Primary Keys**: Better for distributed systems and security
 - **Indexes**: Optimized queries for loan states and user relationships
-- **Pessimistic Locking**: Prevents race conditions at the cost of some throughput
+- **Atomic Transactions**: Prevents race conditions with single-operation locking
 
 ### **Trade-offs Made**
 
@@ -601,9 +601,9 @@ amf-loan-service/
 
 ### Consumer Processing
 
-- **Pessimistic locking**: Prevents race conditions on loan updates
-- **Transaction safety**: Investment creation and loan updates in single transaction
-- **Error handling**: Failed investments don't commit changes
+- **Atomic operations**: Single transaction for loan locking, validation, and investment creation
+- **Transaction safety**: All operations succeed or fail together
+- **Error handling**: Failed investments don't commit any changes
 - **Idempotency**: Safe to retry failed message processing
 
 ## 🔐 Security & Authentication
@@ -742,8 +742,8 @@ For complete API documentation with examples, see the included **Postman Collect
 ```go
 // Initial approach: Direct database updates
 // Problem: Multiple investors could over-invest simultaneously
-// Solution: Kafka events + pessimistic locking
-loan, err := s.loanRepo.GetByIDWithLock(ctx, event.LoanID)
+// Solution: Kafka events + atomic transaction with locking
+loan, err := s.investmentRepo.CreateInvestmentWithLoanLock(ctx, investment, event.LoanID)
 ```
 
 **2. Kafka Consumer Latency**

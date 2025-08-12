@@ -58,12 +58,12 @@ func (s *notificationService) generateAgreementLetterURL(loanID, investorID, inv
 
 // simulateEmailSending logs the email that would be sent to the investor
 func (s *notificationService) simulateEmailSending(email, fullName, agreementURL string, loanID uuid.UUID) {
-	log.Printf("📧 SIMULATED EMAIL SENT 📧")
+	log.Printf("SIMULATED EMAIL SENT")
 	log.Printf("To: %s (%s)", email, fullName)
 	log.Printf("Subject: Investment Agreement Letter - Loan %s", loanID.String())
 	log.Printf("Body: Dear %s,", fullName)
 	log.Printf("Your investment has been successfully processed. Please find your agreement letter at:")
-	log.Printf("🔗 Agreement Letter: %s", agreementURL)
+	log.Printf("Agreement Letter: %s", agreementURL)
 	log.Printf("Thank you for investing with AMF Loan Service!")
 	log.Printf("---")
 }

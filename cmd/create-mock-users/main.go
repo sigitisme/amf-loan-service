@@ -115,7 +115,7 @@ func main() {
 			continue
 		}
 
-		log.Printf("✅ Created borrower: %s (%s)", b.fullName, b.email)
+		log.Printf("Created borrower: %s (%s)", b.fullName, b.email)
 	}
 
 	// Create mock investors
@@ -212,7 +212,7 @@ func main() {
 			continue
 		}
 
-		log.Printf("✅ Created investor: %s (%s)", i.fullName, i.email)
+		log.Printf("Created investor: %s (%s)", i.fullName, i.email)
 	}
 
 	// Create field validator and field officer
@@ -260,27 +260,27 @@ func main() {
 			continue
 		}
 
-		log.Printf("✅ Created %s: %s", s.name, s.email)
+		log.Printf("Created %s: %s", s.name, s.email)
 	}
 
-	log.Println("🎉 Mock data creation completed!")
+	log.Println("Mock data creation completed!")
 	log.Println("")
-	log.Println("📋 Created Accounts:")
-	log.Println("👤 Borrowers:")
+	log.Println("Created Accounts:")
+	log.Println("Borrowers:")
 	log.Println("   - borrower1@example.com (John Doe)")
 	log.Println("   - borrower2@example.com (Alice Johnson)")
 	log.Println("   - borrower3@example.com (Bob Smith)")
 	log.Println("")
-	log.Println("💰 Investors:")
+	log.Println("Investors:")
 	log.Println("   - investor1@example.com (Emma Wilson)")
 	log.Println("   - investor2@example.com (Michael Brown)")
 	log.Println("   - investor3@example.com (Sarah Davis)")
 	log.Println("   - investor4@example.com (David Lee)")
 	log.Println("   - investor5@example.com (Lisa Martinez)")
 	log.Println("")
-	log.Println("🏢 Staff:")
+	log.Println("Staff:")
 	log.Println("   - validator@amf.com (Field Validator)")
 	log.Println("   - officer@amf.com (Field Officer)")
 	log.Println("")
-	log.Println("🔑 All passwords: password123 (except staff: validator123/officer123)")
+	log.Println("All passwords: password123 (except staff: validator123/officer123)")
 }
