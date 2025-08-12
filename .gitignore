@@ -106,7 +106,6 @@ dev/
 c.out
 
 # Application specific
-server
 main
 amf-loan-service
 
